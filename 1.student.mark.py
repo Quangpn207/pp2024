@@ -18,7 +18,7 @@ def listcourses():
         print(f"Course ID: {course['id']}, Name: {course['name']}")
 def liststudents():
     print("\nList of students: \n")
-    for student in  Students:
+    for student in Students:
         print(f"Student ID: {student['id']}, Name: {student['name']}, Date of Birth: {student['DoB']}")
 def input_marks():
     listcourses()
