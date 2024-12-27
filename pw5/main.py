@@ -1,23 +1,96 @@
 import zipfile
+import os
 import curses
-import numpy as np
 from domain.student import Student
 from domain.course import Course
 import input
 from output import display_list, display_message, display_marks, display_sorted_students
-
-import zipfile
 
 def compress_files(file_paths, zip_path):
     with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
         for file in file_paths:
             zipf.write(file, arcname=file.split("/")[-1])  # Add each file to the zip
     print(f"Compressed {len(file_paths)} files into {zip_path}")
+def decompress_files(zip_file_path, extract_to):
+    try:
+        os.makedirs(extract_to,exist_ok=True)
+        with zipfile.ZipFile(zip_file_path,'r') as zip_ref:
+            zip_ref.extractall(extract_to)
+            return zip_ref.namelist()
+    except FileNotFoundError:
+        return []
+    except zipfile.BadZipFile:
+        return []
+def load_students(file_path):
+    students = []
+    try:
+        with open(file_path, "r") as f:
+            for line in f:
+                line = line.strip()
+                if line:
+                    parts = line.split(", ")
+                    student_id = parts[0].split(": ")[1]
+                    name = parts[1].split(": ")[1]
+                    dob = parts[2].split(": ")[1]
+                    students.append(Student(student_id, name, dob))
+    except FileNotFoundError:
+        print(f"Error: {file_path} not found.")
+    return students
+def load_courses(file_path):
+    courses = []
+    try:
+        with open(file_path, "r") as f:
+            for line in f:
+                line = line.strip()
+                if line:
+                    parts = line.split(", ")
+                    course_id = parts[0].split(": ")[1]
+                    name = parts[1].split(": ")[1]
+                    credits = int(parts[2].split(": ")[1])
+                    courses.append(Course(course_id, name, credits))
+    except FileNotFoundError:
+        print(f"Error: {file_path} not found.")
+    return courses
+def load_marks(file_path, courses):
+    try:
+        with open(file_path, "r") as f:
+            current_course = None
+            for line in f:
+                line = line.strip()
+                if line.startswith("Mark for course"):
+                    course_name = line.split("Mark for course ")[1].rstrip(":")
+                    current_course = next((c for c in courses if c.name == course_name), None)
+                elif current_course:
+                    parts = line.split(": ")
+                    if len(parts) == 2:
+                        student_info, mark = parts
+                        student_id = student_info.split("(")[1].rstrip(")")
+                        current_course.assign_mark(student_id, float(mark))
+    except FileNotFoundError:
+        print(f"Error: {file_path} not found.")
+import os
 
+def delete_files(file_paths):
+    for file_path in file_paths:
+        if os.path.exists(file_path):
+            try:
+                os.remove(file_path) 
+                print(f"Deleted file: {file_path}")
+            except Exception as e:
+                print(f"Error deleting file {file_path}: {e}")
+        else:
+            print(f"File not found: {file_path}")
 
 def main(stdscr):
     students = []
     courses = []
+    zip_file_path = "students.dat"
+    extract_to = "."
+    if os.path.exists(zip_file_path):
+        decompress_files(zip_file_path,extract_to)
+    students = load_students("students.txt")
+    courses = load_courses("courses.txt")
+    load_marks("marks.txt", courses)
     while True:
         stdscr.clear()
         stdscr.addstr(0, 0, "Menu:")
@@ -86,7 +159,18 @@ def main(stdscr):
                             student_gpa_list.append(f"{student.name} (ID: {student.id}): GPA = {round(gpa, 2)}")
                     display_sorted_students(stdscr, "Sorted Students by GPA:", student_gpa_list)
             elif choice == "8":  # Exit
-                compress_files(["students.txt","courses.txt","marks.txt"], "student.dat")
+                files = [
+                    "students.txt",
+                    "courses.txt",
+                    "marks.txt"
+                    ]
+                existing_files = [file for file in files if os.path.exists(file)]
+                if existing_files:
+                    compress_files(existing_files, "students.dat")
+                    delete_files(existing_files)
+                    print(f"Compressed and deleted files: {existing_files}")
+                else:
+                    print("No files to compress or delete.")
                 break
             else:
                 display_message(stdscr, "Invalid choice! Please try again.")
