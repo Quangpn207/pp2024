@@ -76,6 +76,7 @@ def main(stdscr):
                         if total_credits:
                             gpa = sum(total_marks) / sum(total_credits)
                             student_gpa_list.append(f"{student.name} (ID: {student.id}): GPA = {round(gpa, 2)}")
+                    student_gpa_list.sort(key=lambda x: float(x.split("GPA = ")[1]), reverse=True)
                     display_sorted_students(stdscr, "Sorted Students by GPA:", student_gpa_list)
             elif choice == "8":  # Exit
                 break
