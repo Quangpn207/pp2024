@@ -18,7 +18,7 @@ def input_student(student, stdscr):
         dob = input_popup(stdscr, f"Enter Student {i+1} DoB: ")
         student_obj = Student(id, name, dob)
         student.append(student_obj)
-def input_course(course,stdscr):  
+def input_course(course,stdscr):   
     num_courses = int(input_popup(stdscr, "Enter number of courses: "))
     for i in range(num_courses):
         course_id = input_popup(stdscr, f"Enter Course {i+1} ID: ")
